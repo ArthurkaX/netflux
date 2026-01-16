@@ -1,0 +1,25 @@
+ORGANIZATION_BLOCK "Main"
+TITLE = "Main Program Sweep (Cycle)"
+{ S7_Optimized_Access := 'TRUE' }
+VERSION : 0.1
+
+BEGIN
+	
+	"fbNetflux_SEND_DB"(i_udp_connection_id := 257,
+	          i_ip_address := '192.168.10.10',
+	          i_udp_port := 2000,
+	          i_seq_num_partner := "fbNetflux_RECV_DB".o_seq_num_partner,
+	          i_send_DB_number := 230,
+	          i_send_rate := T#2ms);
+	
+	//User programm
+	WAIT("wait_time"); //debug reasons only, emulate user program
+	
+	"fbNetflux_RECV_DB"(i_udp_connection_id:=257,
+	                 i_udp_port:=2000,
+	                 i_recv_DB_number:=231,
+	                 i_watch_interval := T#500ms);
+	
+	
+END_ORGANIZATION_BLOCK
+

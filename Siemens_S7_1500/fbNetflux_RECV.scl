@@ -1,0 +1,159 @@
+FUNCTION_BLOCK "fbNetflux_RECV"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.1
+   VAR_INPUT 
+      i_udp_connection_id : CONN_OUC;   // Connection ID for the UDP communication (from TCON).
+      i_udp_port : UInt;   // Local UDP port to listen on.
+      i_recv_DB_number : UInt;   // DB number where received data will be stored. Must have optimized access disabled.
+      i_watch_interval : Time := T#10MS;   // Watchdog time. If no new packet arrives within this interval, o_error is set.
+      i_keep_values : Bool;   // If TRUE, last received values are kept on watchdog timeout. If FALSE, the DB is cleared.
+   END_VAR
+
+   VAR_OUTPUT 
+      o_error : Bool;   // TRUE if no valid packet has been received OR if the watchdog has timed out.
+      o_seq_num_partner : USInt;   // Sequence number received from the communication partner.
+   END_VAR
+
+   VAR 
+      s_recv_db_length : UDInt;   // Length of the destination data block.
+      s_attr_state : Byte;
+      s_attr_retval : Int;   // Return value of the ATTR_DB instruction.
+      s_prev_seq_num : USInt;   // Stores the sequence number of the last processed packet.
+      s_seq_num_feedb : USInt;
+      s_prev_seq_num_feedb : USInt;   // Siemens library instruction instances
+      s_TRCV_C_Instance {InstructionName := 'TRCV_C'; LibVersion := '3.2'} : TRCV_C;   // Instance for receiving UDP data.
+      s_recieve_timeout {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;   // Watchdog timer instance. Connection parameters for TRCV_C
+      s_connection_parameters : Struct
+         ConnectionData {InstructionName := 'TCON_Configured'; LibVersion := '1.0'} : TCON_Configured := ((), 257, 254);
+         ADDR_Send {InstructionName := 'TADDR_Param'; LibVersion := '1.0'} : TADDR_Param := ([192, 168, 2(10)], 2000, ());   // Internal state flags
+      END_STRUCT;
+      s_init : Bool := TRUE;   // Flag for first scan initialization.
+      s_error_init : Bool;   // Flag to indicate an error during initialization.
+      s_watchDog_timeout : Bool;   // Flag set by the watchdog timer when no new packet arrives in time.
+      s_first_packet_received : Bool := FALSE;   // Flag to track if at least one valid packet has been received.
+   END_VAR
+
+   VAR_TEMP 
+      t_index : DInt;
+      t_recv_data : Struct   // Buffer to hold the raw data from the UDP packet
+         seq_num : USInt;
+         feedback_seq_num : USInt;
+         data : Array[0..1460] of Byte;
+      END_STRUCT;
+   END_VAR
+
+   VAR CONSTANT 
+      ZERO : Byte := 0;   // Constant for zero byte, used to clear the DB
+   END_VAR
+
+
+BEGIN
+	
+	(*
+	This function block receives data via UDP and writes it into a specified data block (DB).
+	
+	How it works:
+	1. On the first scan, it initializes the connection parameters and validates the destination DB.
+	2. It continuously listens for incoming UDP packets on the specified port.
+	3. A sequence number check ensures that old, duplicate, or out-of-order packets are discarded, accepting only the newest data.
+	4. A watchdog timer monitors the reception of packets. If no valid packet arrives within the 'i_watch_interval', an error is flagged.
+	5. If the watchdog expires, the behavior is controlled by 'i_keep_values':
+	   - If 'i_keep_values' is FALSE, the destination DB is cleared for safety.
+	   - If 'i_keep_values' is TRUE, the last valid data is retained in the DB.
+	6. For valid packets, the data is written into the destination DB using the POKE instruction.
+	
+	Usage Notes:
+	- The destination data block ('i_recv_DB_number') must have "Optimized block access" disabled.
+	- The maximum size of the data payload that can be received is 1461 bytes.
+	
+	Outputs:
+	- o_error: This output is TRUE under the following conditions:
+	    - During initialization.
+	    - If the initialization of the DB attributes fails.
+	    - If the watchdog timer expires (no valid packet received within 'i_watch_interval').
+	    - Before the very first valid packet is received.
+	  It is FALSE only when a valid data packet has been successfully received and processed, and the watchdog timer has not expired.
+	*)
+	
+	
+	// Initialization on the first scan of the function block
+	IF #s_init THEN
+	    // Get the length of the destination DB to know how many bytes to write
+	    #s_attr_retval := ATTR_DB(REQ := TRUE, DB_NUMBER := #i_recv_DB_number, DB_LENGTH => #s_recv_db_length, ATTRIB => #s_attr_state);
+	    IF #s_attr_retval = 16#0000 THEN
+	        // If successful, configure the connection parameters
+	        #s_init := FALSE;
+	        #s_connection_parameters.ConnectionData.ID := #i_udp_connection_id;
+	        #s_connection_parameters.ConnectionData.ConnectionType := 254; // UDP protocol
+	        #s_connection_parameters.ADDR_Send.REM_PORT_NR := #i_udp_port;
+	    ELSE
+	        // If getting DB attributes fails, set an initialization error flag
+	        #s_error_init := TRUE;
+	    END_IF;
+	END_IF;
+	
+	// Execute the TRCV_C instruction to receive data via UDP
+	#s_TRCV_C_Instance(EN_R := TRUE,
+	                   CONNECT := #s_connection_parameters.ConnectionData,
+	                   DATA := #t_recv_data, // Store received data in the temporary buffer
+	                   ADDR := #s_connection_parameters.ADDR_Send,
+	                   CONT := TRUE);
+	
+	
+	// A new packet has been received
+	IF #s_TRCV_C_Instance.DONE THEN
+	    
+	    // This logic handles the first packet, and subsequent packets based on a sequence number
+	    // that handles wrap-around. Out-of-sequence (older) packets are ignored.
+	    // The check for "newer" is based on a sliding window of 128. This is a common
+	    // method for sequence numbers in protocols over UDP.
+	    IF NOT #s_first_packet_received OR
+	        (#t_recv_data.seq_num > #s_prev_seq_num AND #t_recv_data.seq_num - #s_prev_seq_num < 128) OR
+	        (#t_recv_data.seq_num < #s_prev_seq_num AND #s_prev_seq_num - #t_recv_data.seq_num > 128)
+	    THEN
+	        // Packet is the first one, or it's newer than the last one. Process it.
+	        // Copy the data from the temporary buffer to the destination DB.
+	        FOR #t_index := 0 TO UDINT_TO_DINT(#s_recv_db_length) - 1 BY 1 DO
+	            POKE(area := 16#84, // 16#84 corresponds to a Data Block
+	                 dbNumber := #i_recv_DB_number,
+	                 byteOffset := #t_index,
+	                 value := #t_recv_data.data[#t_index]);
+	        END_FOR;
+	        
+	        // Update state to reflect that we have good data
+	        #s_first_packet_received := TRUE;
+	        #s_prev_seq_num := #t_recv_data.seq_num;
+	        #s_seq_num_feedb := #t_recv_data.feedback_seq_num;
+	        #o_seq_num_partner := #t_recv_data.seq_num;
+	    END_IF;
+	    // If the packet is old or a duplicate, we do nothing, preserving the last good data.
+	    
+	    // No new packet received within the watchdog time
+	ELSIF #s_watchDog_timeout AND NOT #i_keep_values THEN
+	    // It's been too long since the last packet, clear the destination DB for safety.
+	    FOR #t_index := 0 TO UDINT_TO_DINT(#s_recv_db_length) - 1 BY 1 DO
+	        POKE(area := 16#84,
+	             dbNumber := #i_recv_DB_number,
+	             byteOffset := #t_index,
+	             value := #ZERO);
+	    END_FOR;
+	    
+	    // Reset sequence tracking to accept the next packet that arrives.
+	    #s_first_packet_received := FALSE;
+	END_IF;
+	
+	#s_recieve_timeout(IN := #s_seq_num_feedb = #s_prev_seq_num_feedb,
+	                   PT := #i_watch_interval,
+	                   Q => #s_watchDog_timeout);
+	
+	#s_prev_seq_num_feedb := #s_seq_num_feedb;
+	
+	
+	
+	// The output error is true if we have not yet received the first valid packet or if the watchdog has timed out.
+	#o_error := NOT #s_first_packet_received OR #s_watchDog_timeout;
+	
+	
+	
+END_FUNCTION_BLOCK
+

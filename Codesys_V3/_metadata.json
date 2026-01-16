@@ -1,0 +1,61 @@
+{
+  "project_path": "C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux.project", 
+  "project_name": "Project(Project=0, stPath=C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux.project)", 
+  "export_timestamp": "", 
+  "objects": {
+    "NETFLUX/fbTaskInfo.st": {
+      "parent": "NETFLUX", 
+      "guid": "72807669-e72d-456c-9a6e-8c11208a6908", 
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "fbTaskInfo"
+    }, 
+    "NETFLUX/fbNetflux_Recieve.st": {
+      "parent": "NETFLUX", 
+      "guid": "084e2ad2-f059-4e08-8965-2968497749d0", 
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "fbNetflux_Recieve"
+    }, 
+    "MAIN_NETFLUX.st": {
+      "parent": "Application", 
+      "guid": "3f2595b2-960b-40c5-8fba-41c04267be3e", 
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "MAIN_NETFLUX"
+    }, 
+    "NETFLUX/GVL.st": {
+      "parent": "NETFLUX", 
+      "guid": "63ca0a5c-3d22-45f6-963a-6cfb927140a4", 
+      "type": "ffbfa93a-b94d-45fc-a329-229860183b1d", 
+      "name": "GVL"
+    }, 
+    "NETFLUX/DUT_INPUTS.st": {
+      "parent": "NETFLUX", 
+      "guid": "2dc11ec9-6cd8-47d2-8afc-436947d1435e", 
+      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "name": "DUT_INPUTS"
+    }, 
+    "NETFLUX/fbNetflux_Send.st": {
+      "parent": "NETFLUX", 
+      "guid": "431da916-6f4b-4565-a751-312848174ed6", 
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "fbNetflux_Send"
+    }, 
+    "NETFLUX/DUT_RECV_DATA.st": {
+      "parent": "NETFLUX", 
+      "guid": "df33aa1c-078f-4fd3-9f3b-5622d4407ac5", 
+      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "name": "DUT_RECV_DATA"
+    }, 
+    "NETFLUX/fbNetflux_Statistics.st": {
+      "parent": "NETFLUX", 
+      "guid": "95b813ef-e55c-46ed-8641-bf2be0796b21", 
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "fbNetflux_Statistics"
+    }, 
+    "NETFLUX/DUT_OUTPUTS.st": {
+      "parent": "NETFLUX", 
+      "guid": "35c3fab4-c284-4023-bcd1-2370747bf2c9", 
+      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "name": "DUT_OUTPUTS"
+    }
+  }
+}

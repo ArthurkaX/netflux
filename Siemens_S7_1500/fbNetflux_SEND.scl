@@ -1,0 +1,194 @@
+FUNCTION_BLOCK "fbNetflux_SEND"
+{ S7_Optimized_Access := 'FALSE' }
+VERSION : 0.3
+   VAR_INPUT 
+      i_udp_connection_id : CONN_OUC;   // Connection ID from PLC's device network configuration.
+      i_ip_address : String[15];   // Destination IP address, format: 'XXX.XXX.XXX.XXX'.
+      i_udp_port : UInt;   // Destination UDP port.
+      i_send_DB_number : UInt;   // The number of the Data Block whose contents will be sent.
+      i_send_rate : Time := T#10MS;   // Time interval at which to send UDP packets.
+      i_seq_num_partner : USInt;   // Sequence number received from the partner, sent back for feedback.
+   END_VAR
+
+   VAR_OUTPUT 
+      o_status : Word;   // Provides detailed status and error codes. See the block description for details.
+      o_seq_num : USInt;   // The sequence number of the last packet sent. Increments with each successful send.
+      o_error : Bool;   // General error flag. Becomes TRUE if any error occurs.
+   END_VAR
+
+   VAR 
+      s_init : Bool := TRUE;
+      s_error_init : Bool;
+      s_req_send : Bool;
+      s_send_db_length : UDInt;
+      s_attr_state : Byte;
+      s_attr_retval : Int;
+      s_TSEND_C_Instance {InstructionName := 'TSEND_C'; LibVersion := '3.2'} : TSEND_C;
+      s_IEC_Timer_Send {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+      s_connection_parameters : Struct
+         ConnectionData {InstructionName := 'TCON_Configured'; LibVersion := '1.0'} : TCON_Configured := ((), 257, 254);
+         ADDR_Send {InstructionName := 'TADDR_Param'; LibVersion := '1.0'} : TADDR_Param := ([192, 168, 10, 20], 2000, ());
+      END_STRUCT;
+   END_VAR
+
+   VAR_TEMP 
+      t_index : UDInt;
+      t_char_index : Int;
+      t_ip_part_index : Int;
+      t_char : Char;
+      t_octet_val : USInt;
+      t_numString : String[3];
+      t_send_data : Struct
+         seq_num : USInt;
+         feedback_seq_num : USInt;
+         data : Array[0..1460] of Byte;
+      END_STRUCT;
+   END_VAR
+
+   VAR CONSTANT 
+      CONST_2_BYTE_ADD : UDInt := 2;   // Constant for the 2 bytes added by seq_num and feedback_seq_num.
+      MAX_DATA_LEN : UDInt := 1461;   // Maximum length of user data (matches the array size)
+   END_VAR
+
+
+BEGIN
+	(*
+	 This function block sends the entire content of a data block (DB) via UDP protocol.
+	
+	 How it works:
+	 1. On the first scan, it initializes the connection parameters and validates the input DB.
+	 2. It parses the destination IP address string.
+	 3. A timer triggers the sending process at the interval specified by 'i_send_rate'.
+	 4. When triggered, it constructs a data packet containing a sequence number, a feedback sequence number, and the data from the source DB.
+	 5. The data is copied from the source DB into an internal buffer using the PEEK instruction.
+	 6. The TSEND_C instruction is called to send the data.
+	 7. The sequence number increments after each successful transmission.
+	
+	 Usage Notes:
+	 - The source data block ('i_send_DB_number') must not have optimized block access.
+	 - The maximum size of the source DB is 1461 bytes.
+	
+	 Status Codes ('o_status'):
+	   16#7000: Idle. The block is waiting for the next send interval.
+	   16#7001: Initializing. The block is running its first-scan logic.
+	   16#7002: Preparing data. The data is being copied from the source DB to the send buffer.
+	   16#7003: Sending data. TSEND_C instruction is busy.
+	   16#7004: Send complete. Waiting for the next cycle.
+	   16#8001: Error - ATTR_DB failed. Could not read the attributes of the source DB. Check if the DB number is correct.
+	   16#8002: Error - Send DB is too large. The source DB exceeds the maximum buffer size of 1461 bytes.
+	   16#8003: Error - Invalid IP address format. The IP address string could not be parsed correctly.
+	   OTHER: If an error occurs during sending, 'o_status' will contain the status code from the TSEND_C instruction.
+	
+	*)
+	
+	// Reset outputs at the beginning of each scan cycle.
+	#o_error := FALSE;
+	#o_status := 16#7000; // Initial status: Idle
+	
+	// --- One-Time Initialization ---
+	// This section runs only on the first scan to configure the connection based on the inputs.
+	IF #s_init THEN
+	    #o_status := 16#7001; // Status: Initializing
+	    
+	    // Get the length of the source data block.
+	    #s_attr_retval := ATTR_DB(REQ := TRUE, DB_NUMBER := #i_send_DB_number, DB_LENGTH => #s_send_db_length, ATTRIB => #s_attr_state);
+	    
+	    IF #s_attr_retval <> 16#0000 THEN
+	        #s_error_init := TRUE;
+	        #o_status := 16#8001; // Error: ATTR_DB failed. Check DB number.
+	        
+	        // Safety Check: Ensure the source DB fits within our internal send buffer.
+	    ELSIF #s_send_db_length > #MAX_DATA_LEN THEN
+	        #s_error_init := TRUE;
+	        #o_status := 16#8002; // Error: Send DB is too large for the buffer.
+	    ELSE
+	        // Initialization was successful.
+	        #s_init := FALSE;
+	        #s_connection_parameters.ConnectionData.ID := #i_udp_connection_id;
+	        #s_connection_parameters.ConnectionData.ConnectionType := 254; // 254 = UDP
+	        #s_connection_parameters.ADDR_Send.REM_PORT_NR := #i_udp_port;
+	        
+	        // --- IP Address Parsing ---
+	        // This logic converts the IP address string into an array of bytes.
+	        // Note: For maximum robustness, additional validation of the string format could be added.
+	        #t_numString := '';
+	        #t_ip_part_index := 1;
+	        FOR #t_char_index := 1 TO LEN(#i_ip_address) DO
+	            #t_char := #i_ip_address[#t_char_index];
+	            
+	            IF #t_char >= '0' AND #t_char <= '9' THEN
+	                #t_numString := CONCAT(IN1 := #t_numString, IN2 := #t_char);
+	            END_IF;
+	            
+	            IF (#t_char = '.') OR (#t_char_index = LEN(#i_ip_address)) THEN
+	                #t_octet_val := STRING_TO_USINT(#t_numString);
+	                
+	                IF #t_ip_part_index <= 4 THEN
+	                    #s_connection_parameters.ADDR_Send.REM_IP_ADDR[#t_ip_part_index] := #t_octet_val;
+	                END_IF;
+	                
+	                #t_numString := '';
+	                #t_ip_part_index := #t_ip_part_index + 1;
+	            END_IF;
+	        END_FOR;
+	        
+	        // Check if we parsed exactly 4 parts of the IP address.
+	        IF #t_ip_part_index <> 5 THEN
+	            #s_error_init := TRUE;
+	            #o_status := 16#8003; // Error: Invalid IP address format.
+	        END_IF;
+	    END_IF;
+	END_IF;
+	
+	// This timer generates a single-scan pulse ('s_req_send') at the interval specified by 'i_send_rate'.
+	#s_IEC_Timer_Send(IN := NOT #s_error_init AND NOT #s_req_send,
+	                  PT := #i_send_rate,
+	                  Q => #s_req_send);
+	
+	
+	IF #s_req_send THEN
+	    #o_status := 16#7002; // Status: Preparing data
+	    
+	    // Assemble the packet header.
+	    #t_send_data.feedback_seq_num := #i_seq_num_partner;
+	    #t_send_data.seq_num := #o_seq_num;
+	    
+	    // --- Data Copy ---
+	    // This loop copies data byte-by-byte from the source DB to the send buffer.
+	    IF #s_send_db_length > 0 THEN
+	        FOR #t_index := 0 TO #s_send_db_length - 1 BY 1 DO
+	            #t_send_data.data[#t_index] := PEEK(area := 16#84, dbNumber := #i_send_DB_number, byteOffset := UDINT_TO_DINT(#t_index));
+	        END_FOR;
+	    END_IF;
+	    
+	END_IF;
+	
+	// --- Send Data ---
+	// The TSEND_C instruction sends the data from our temporary buffer.
+	#s_TSEND_C_Instance(REQ := #s_req_send,
+	                    DATA := #t_send_data,
+	                    LEN := #s_send_db_length + #CONST_2_BYTE_ADD,
+	                    CONT := TRUE, // Note: 'CONT' parameter behavior can vary. Verify this is correct for your TIA Portal version and CPU firmware.
+	                    ADDR := #s_connection_parameters.ADDR_Send,
+	                    CONNECT := #s_connection_parameters.ConnectionData);
+	
+	// If the send operation is complete, increment the sequence number for the next packet.
+	IF #s_TSEND_C_Instance.DONE THEN
+	    #o_seq_num := #o_seq_num + 1;
+	    #o_status := 16#7004; // Status: Send complete, waiting for next cycle
+	END_IF;
+	
+	// While the instruction is actively sending, update the status.
+	IF #s_TSEND_C_Instance.BUSY THEN
+	    #o_status := 16#7003; // Status: Sending data
+	END_IF;
+	
+	// Set the error flag if initialization failed or if TSEND_C reports an error.
+	IF #s_TSEND_C_Instance.ERROR OR #s_error_init THEN
+	    #o_error := TRUE;
+	    #o_status := #s_TSEND_C_Instance.STATUS; // Pass through the specific status code from the instruction.
+	END_IF;
+	
+	
+END_FUNCTION_BLOCK
+

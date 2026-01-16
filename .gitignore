@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# CODESYS
+*.autosave
+*.bak
+*.opt
+*.sdb
+*.compileinfo
+*.img
+*.frc
+*.trace
+*.crc
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archives
+*.zip
+*.rar
+*.tar
+*.gz
+*.7z
+
+# User Specific
+# Keeping Projects ignored as it contains binaries. 
+# If you want to version the main project file, verify the size and uncomment the exception below or remove this line.
+/Projects
+# !/Projects/netflux.project
