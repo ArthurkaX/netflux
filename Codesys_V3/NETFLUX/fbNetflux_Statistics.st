@@ -70,14 +70,14 @@ s_trigFeedbackPacketRound(CLK:= i_bFeedbackSeqNumber >= 0 AND i_bFeedbackSeqNumb
 
 //Average time between packets received from the partner
 IF s_trigSendPacketRound.Q THEN
-	o_rAvgOwnInterval := s_rOwnCycleCounter / 256.0 - 2.0 * i_rTaskCycle;
+	o_rAvgOwnInterval := (s_rOwnCycleCounter + i_rTaskCycle) / 256.0;
 	s_rOwnCycleCounter := 0.0;
 ELSE
 	s_rOwnCycleCounter := s_rOwnCycleCounter + i_rTaskCycle;
 END_IF
 //Average time between packets sent by this PLC.
 IF s_trigRecvPacketRound.Q THEN
-	o_rAvgPartnerInterval := s_rPartnerCycleCounter / 256.0 - 2.0 * i_rTaskCycle;
+	o_rAvgPartnerInterval := (s_rPartnerCycleCounter + i_rTaskCycle) / 256.0;
 	s_rPartnerCycleCounter := 0.0;
 ELSE
 	s_rPartnerCycleCounter := s_rPartnerCycleCounter + i_rTaskCycle;

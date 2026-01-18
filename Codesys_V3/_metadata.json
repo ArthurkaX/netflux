@@ -1,7 +1,5 @@
 {
   "project_path": "C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux.project", 
-  "project_name": "Project(Project=0, stPath=C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux.project)", 
-  "export_timestamp": "", 
   "objects": {
     "NETFLUX/fbTaskInfo.st": {
       "parent": "NETFLUX", 
@@ -57,5 +55,9 @@
       "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
       "name": "DUT_OUTPUTS"
     }
-  }
+  }, 
+  "autosync": "STOPPED", 
+  "project_name": "Project(Project=0, stPath=C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux.project)", 
+  "sync_timeout": 10000, 
+  "export_timestamp": "2026-01-18 22:05:13"
 }

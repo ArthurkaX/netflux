@@ -4,7 +4,7 @@ VAR
 
 	// --- Instances of the netflux function blocks ---
 	_fbNetflux_Recieve : fbNetflux_Recieve; // Instance of the block responsible for receiving UDP data.
-	_fbNetflux_Send : fbNetflux_Send;       // Instance of the block responsible for sending UDP data.
+	_fbNetflux_Send : fbNetflux_Send := (i_tSendInterval := TIME#4ms);       // Instance of the block responsible for sending UDP data.
 	
 	_fbNetflux_Statistics : fbNetflux_Statistics;
 	
@@ -34,13 +34,14 @@ _fbNetflux_Recieve(
 
 
 
+
 // IF _xTuneSend THEN
 // 	_fbPUDP_Send.i_tSendInterval := _fbPUDP_Statistics.o_tAvgPartnerInterval;
 // END_IF	
 // --- Call the Send block ---
 // This block periodically sends data to the remote partner.
 _fbNetflux_Send(
-	i_uiRemotePort:= 2000,                              // Send data to UDP port 2000 on the remote device.
+	i_uiRemotePort:= 2001,                              // Send data to UDP port 2000 on the remote device.
 	i_sIPaddress:= '172.10.10.10',                     // The IP address of the remote device.
 	i_ptrSendData:= ADR(GVL.data_send),                 // Pointer to the global variable structure containing the data to be sent.
 	i_uiSizeSendData:= SIZEOF(GVL.data_send),           // The size of the data structure to be sent.
