@@ -240,8 +240,7 @@ CASE eState OF
         
 
         
-        // Execute Statistics
-        THIS^.Statistics();
+      
 
     ENUM_NetfluxSocketState.ERROR: // Error
         xError := TRUE;

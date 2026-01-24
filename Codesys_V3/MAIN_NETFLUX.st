@@ -1,6 +1,6 @@
 PROGRAM MAIN_NETFLUX
 VAR
-    _fbTaskInfo: fbTaskInfo;
+ 
 
     // --- Unified Communication Block ---
     _fbNetflux_Socket: fbNetflux_Socket;
@@ -12,9 +12,6 @@ END_VAR
     Uses the optimized fbNetflux_Socket to handle high-speed bidirectional UDP.
     Links the input/output GVL arrays to the network socket.
  *)
-
-_fbTaskInfo();
-
 
 // Call the socket block with parameters matching your network setup
 _fbNetflux_Socket(
@@ -38,5 +35,11 @@ _fbNetflux_Socket(
     xConnected => ,
     uiPacketsReceivedPerCycle => ,
     tRoundTripTime => ,
-    bLastPartnerSeq =>
-);
+    bLastPartnerSeq =>);
+	
+
+// Execute Send logic explicitly
+_fbNetflux_Socket.send();
+
+// Execute Statistics
+_fbNetflux_Socket.Statistics();

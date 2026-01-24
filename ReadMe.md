@@ -43,3 +43,39 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔧 Codesys V3 Implementation (v5)
+
+The Codesys V3 implementation has been significantly refactored to a **Unified Socket Architecture** (`fbNetflux_Socket`) to improve reliability and maintainability.
+
+### Key Capabilities
+- **Unified Function Block**: Handles both sending and receiving in a single non-blocking state machine.
+- **Robust Connection Handling**:
+    - **Cold Start Detection**: Automatically resets socket handles on program download/restart.
+    - **Fast Port Release**: Uses `SO_REUSEADDR` option to allow immediate reconnection, eliminating the need for controller restarts stuck in `TIME_WAIT`.
+    - **Auto-Recovery**: Built-in error recovery mechanism retries connections automatically.
+- **Performance Tuning**:
+    - Optimized `SysSocket` calls (tuned signatures for speed).
+    - Buffer management optimization.
+- **Detailed Statistics**:
+    - `tPartnerTxPeriod`: Measures the actual reception interval from the partner.
+    - `tOwnRealTxPeriod`: Measures the PLC's actual transmission interval.
+    - `tInstantRTT`: Estimated Round Trip Time.
+    - `uiInstantRxSkipped`: Counters for lost/skipped packets.
+
+### Usage Pattern
+The Main program (`MAIN_NETFLUX`) uses an explicit execution order for better control:
+
+```pascal
+// 1. Process Receive Logic (inside FB body)
+_fbNetflux_Socket(...);
+
+// 2. Execute Application Logic using received data
+// ...
+
+// 3. Explicitly Send Data (at end of cycle)
+_fbNetflux_Socket.send();
+
+// 4. Update Statistics (optional)
+_fbNetflux_Socket.Statistics();
+```

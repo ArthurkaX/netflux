@@ -1,87 +1,80 @@
 {
   "project_path": "C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux_PSV.project", 
   "objects": {
-    "NETFLUX/fbTaskInfo.st": {
-      "name": "fbTaskInfo", 
-      "content_hash": "cab991938e37530b6bcaa9ad1d139bfef236f16022360c7eeb291447af0b9dc0", 
-      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
-      "guid": "72807669-e72d-456c-9a6e-8c11208a6908", 
-      "parent": "NETFLUX"
+    "NETFLUX/fbNetflux_Socket.CloseSocket.st": {
+      "parent": "fbNetflux_Socket", 
+      "guid": "d220a4e1-8f2d-4024-b33a-34ea17842f7c", 
+      "type": "f8a58466-d7f6-439f-bbb8-d4600e41d099", 
+      "name": "CloseSocket", 
+      "content_hash": "81e09292bb95da31933a4ea85e986f1a0e12c8cde660e7bfc2a7ea0a10f6ed39"
     }, 
     "NETFLUX": {
-      "name": "NETFLUX", 
-      "content_hash": "", 
-      "type": "738bea1e-99bb-4f04-90bb-a7a567e74e3a", 
+      "parent": "Application", 
       "guid": "cfc51662-ad1a-4b0a-b51b-510ea27345eb", 
-      "parent": "Application"
+      "type": "738bea1e-99bb-4f04-90bb-a7a567e74e3a", 
+      "name": "NETFLUX", 
+      "content_hash": ""
     }, 
     "MAIN_NETFLUX.st": {
-      "name": "MAIN_NETFLUX", 
-      "content_hash": "dd3444d7d687689c62d818f19b426bb2eda5ba3075aa289467db66b6ae608f76", 
-      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "parent": "Application", 
       "guid": "3f2595b2-960b-40c5-8fba-41c04267be3e", 
-      "parent": "Application"
-    }, 
-    "NETFLUX/fbNetflux_Socket.CloseSocket.st": {
-      "name": "CloseSocket", 
-      "content_hash": "81e09292bb95da31933a4ea85e986f1a0e12c8cde660e7bfc2a7ea0a10f6ed39", 
-      "type": "f8a58466-d7f6-439f-bbb8-d4600e41d099", 
-      "guid": "d220a4e1-8f2d-4024-b33a-34ea17842f7c", 
-      "parent": "fbNetflux_Socket"
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "MAIN_NETFLUX", 
+      "content_hash": "cce2fcde0a368842f18c601233528e804f36e39b7b254d24614d9452d4ff397d"
     }, 
     "NETFLUX/ENUM_NetfluxSocketState.st": {
-      "name": "ENUM_NetfluxSocketState", 
-      "content_hash": "c4f6ae0b45883293f4dd93b82f637e3ae70186ebb8a0bae90ad99a3cffe4f96d", 
-      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "parent": "NETFLUX", 
       "guid": "c5b4da22-d857-4798-8b77-2d65aa0f80df", 
-      "parent": "NETFLUX"
+      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "name": "ENUM_NetfluxSocketState", 
+      "content_hash": "c4f6ae0b45883293f4dd93b82f637e3ae70186ebb8a0bae90ad99a3cffe4f96d"
     }, 
     "NETFLUX/fbNetflux_Socket.send.st": {
-      "name": "send", 
-      "content_hash": "14d7763bda8fac874e16f7a9f2580990abaa2e0548aedeb90d2f3249bb15d864", 
-      "type": "f8a58466-d7f6-439f-bbb8-d4600e41d099", 
+      "parent": "fbNetflux_Socket", 
       "guid": "928ea2cc-0b4a-4056-a842-1eca63b37c86", 
-      "parent": "fbNetflux_Socket"
+      "type": "f8a58466-d7f6-439f-bbb8-d4600e41d099", 
+      "name": "send", 
+      "content_hash": "14d7763bda8fac874e16f7a9f2580990abaa2e0548aedeb90d2f3249bb15d864"
     }, 
     "NETFLUX/fbNetflux_Socket.Statistics.st": {
-      "name": "Statistics", 
-      "content_hash": "b02006d7bdc5173abd4bd609f72dcb3144b8dc5e9887e17939036148fc6373e1", 
-      "type": "f8a58466-d7f6-439f-bbb8-d4600e41d099", 
+      "parent": "fbNetflux_Socket", 
       "guid": "38f37f4c-8d37-41d7-8b0d-f63d8aefb656", 
-      "parent": "fbNetflux_Socket"
+      "type": "f8a58466-d7f6-439f-bbb8-d4600e41d099", 
+      "name": "Statistics", 
+      "content_hash": "b02006d7bdc5173abd4bd609f72dcb3144b8dc5e9887e17939036148fc6373e1"
     }, 
     "NETFLUX/GVL_IO.st": {
-      "name": "GVL_IO", 
-      "content_hash": "610887c8d9f8efe30fcd8c37c45ef73e9d819eda0eda7a72d823d0bab622a2e5", 
-      "type": "ffbfa93a-b94d-45fc-a329-229860183b1d", 
+      "parent": "NETFLUX", 
       "guid": "63ca0a5c-3d22-45f6-963a-6cfb927140a4", 
-      "parent": "NETFLUX"
+      "type": "ffbfa93a-b94d-45fc-a329-229860183b1d", 
+      "name": "GVL_IO", 
+      "content_hash": "610887c8d9f8efe30fcd8c37c45ef73e9d819eda0eda7a72d823d0bab622a2e5"
     }, 
     "NETFLUX/DUT_INPUTS.st": {
-      "name": "DUT_INPUTS", 
-      "content_hash": "246949fe5e26204ff326eb7226732948a3410ec4bff89a1551caac3454ac6db3", 
-      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "parent": "NETFLUX", 
       "guid": "2dc11ec9-6cd8-47d2-8afc-436947d1435e", 
-      "parent": "NETFLUX"
+      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "name": "DUT_INPUTS", 
+      "content_hash": "246949fe5e26204ff326eb7226732948a3410ec4bff89a1551caac3454ac6db3"
     }, 
     "NETFLUX/fbNetflux_Socket.st": {
-      "name": "fbNetflux_Socket", 
-      "content_hash": "f3ac37fab2b4ed9ab1bd31f3be04cb9598d0109be5e48ebc2db800ed6273b851", 
-      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "parent": "NETFLUX", 
       "guid": "6ccc5478-86db-443a-b4bb-05a0b0db3aae", 
-      "parent": "NETFLUX"
+      "type": "6f9dac99-8de1-4efc-8465-68ac443b7d08", 
+      "name": "fbNetflux_Socket", 
+      "content_hash": "73a7845cce175cc29b1ed1ca9460fe7aea9ddd3a87f9d35966254592a838d65b"
     }, 
     "NETFLUX/DUT_OUTPUTS.st": {
-      "name": "DUT_OUTPUTS", 
-      "content_hash": "4b3a912e6cd29c28fedbe431711ab1bdbd168b4afa492af4942aeedfd8abbb4c", 
-      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "parent": "NETFLUX", 
       "guid": "35c3fab4-c284-4023-bcd1-2370747bf2c9", 
-      "parent": "NETFLUX"
+      "type": "2db5746d-d284-4425-9f7f-2663a34b0ebc", 
+      "name": "DUT_OUTPUTS", 
+      "content_hash": "4b3a912e6cd29c28fedbe431711ab1bdbd168b4afa492af4942aeedfd8abbb4c"
     }
   }, 
   "autosync": "STOPPED", 
   "project_name": "Project(Project=0, stPath=C:\\home\\OneDrive\\Documents\\Codesys\\netflux\\netflux_PSV.project)", 
   "export_xml": false, 
   "sync_timeout": 10000, 
-  "export_timestamp": "2026-01-24 11:44:13"
+  "export_timestamp": "2026-01-24 11:57:54"
 }
